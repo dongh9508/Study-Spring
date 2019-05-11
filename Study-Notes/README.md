@@ -53,3 +53,45 @@
   * 이벤트 발행 기능
 
   * 리소스 로딩 기능
+
+### Spring IoC Container의 역할
+
+  * Bean 인스턴스 생성
+
+  * 의존 관계 설정
+
+  * Bean 설정
+
+### ApplicationContext
+
+  * ClassPathXmlApplicationContext(XML)
+
+  * AnnotationConfigApplicationContext(Java)
+
+### Bean 설정
+
+  * Bean 명세서
+
+  * Bean에 대한 정의를 담고 있음.
+
+    * 이름
+
+    * 클래스
+
+    * 스코프
+
+    * 생성자 Argument(Consturctor)
+
+    * 프로젝트(Setter)
+
+    * ...
+
+### Component Scan
+
+  * 설정 방법
+
+    * XML 설정에서는 context:component-scan
+
+    * Java 설정에서 `@ComponentScan`
+
+  * 특정 패키지 이하의 모든 클래스 중에 `@Component` 어노테이션을 사용한 클래스를 Bean으로 자동으로 등록 해줌.
