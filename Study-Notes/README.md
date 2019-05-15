@@ -24,6 +24,12 @@
 
         * 싱글톤 : 하나
 
+          * 싱글톤 스코프로 등록된 빈들은 초기에 다 생성됨. 
+
+          * 등록해야 할 빈이 많을 경우, 초기에 구동시간이 오래 걸릴수 있다.
+
+          * 일단 구동이 되면 또 다른 빈을 만들어 내지는 않기 때문에 구동 이후에는 성능을 많이 잡아먹지 않는다.
+
         * 프로토타입 : 매번 다른 객체
 
         * Spring IoC Container에 등록되는 빈들은 기본적으로 싱글톤 스코프로 빈으로 등록 됨.
@@ -90,18 +96,20 @@
   * ClassPathXmlApplicationContext(XML)
 
     * XML 파일로 Bean을 등록할 때, ApplicationContext를 사용하고자 할 때
+    <br>
 
-    ```java
-      ApplicationContext context = new ClassPathXmlApplicationContext(XML.xml)
-    ```
+      ```java
+        ApplicationContext context = new ClassPathXmlApplicationContext(XML.xml)
+      ```
 
   * AnnotationConfigApplicationContext(Java)
 
     * Java 방식으로 Bean을 등록할 때, ApplicationContext를 사용하고자 할 때
+    <br>
 
-    ```java
-      ApplicationContext context = new AnnotationConfigApplicationContext(Java.class)
-    ```
+      ```java
+        ApplicationContext context = new AnnotationConfigApplicationContext(Java.class)
+      ```
 
 ### Bean 설정
 
@@ -135,7 +143,7 @@
 
   * 특정 패키지 이하의 모든 클래스 중에 `@Component` 어노테이션을 사용한 클래스를 Bean으로 자동으로 등록 해줌.
 
-### @Autowire
+### `@Autowire`
 
   * 필요한 의존 객체의 "타입"에 해당하는 빈을 찾아 주입한다.
 
@@ -178,13 +186,12 @@
 
     * Filed
 
-    ```java
+      ```java
       @Service
       public class BookService {
         
         @Autowired
         BookRepository bookRepository;
-
       }
       ```
 
@@ -226,6 +233,7 @@
       * `@Primary`
 
         * 둘 중 사용하고자 하는 레파지토리에 `@Primary` 어노테이션을 붙여서 둘 중 어느 레포지토리를 사용할 지에 대해 표기해줄수 있다.
+        <br>
 
         ```java
         @Service
@@ -356,4 +364,109 @@
     
     * 가장 추천 방법은 `@Primary` 어노테이션을 사용하는 방법.
 
+
+### `@Component` 와 `@ComponentScan`
+
+  * 컴포넌트 스캔의 주요 기능
+
+    * 컴포넌트 스캔의 중요한 속성 두 가지
+
+      * 어디서부터 어디까지 스캔할지에 대한 속성
+
+      * 어떤 것들을 걸러낼지에 대한 속성
+
+    * 스캔 위치 설정
+
+      * 컴포넌트 스캔은 컴포넌트 스캔의 어노테이션이 있는 클래스를 기준으로 현재 패키지 내에 있는 클래스들과 그 이하 패키지들에 있는 클래스들 중에서 `@Component` 어노테이션이 사용된 클래스를 찾아서 빈으로 등록한다.
+
+      * 즉, 컴포넌트 스캔 어노테이션이 사용된 클래스의 패키지 밖의 있는 클래스들은 `@Component` 어노테이션이 사용되었다고 `@ComponentScan`으로 스캔이 되지 않기 때문에 Bean으로 등록되지 않는다.
+
+      ```java
+      package com.donghun.pt3;
+
+      // @SpringBootApplication 어노테이션 내부에 @ComponentScan 어노테이션을 내장하고 있다.
+      @SpringBootApplication
+      public class DemoApplication {
+
+        @Autowired
+        MyService myService;
+
+        public static void main(String[] args) {
+          SpringApplication.run(DemoApplication.class, args);
+        }
+      }
+      ```
+
+      ```java
+      package com.donghun;
+
+      @Service
+      public class MyService {
+      }
+      ```
+
+      * 위 코드의 경우,  MyService는 빈으로 등록되지 않아서 빈이 주입이 되지 않는 에러가 발생한다. 
       
+      * MyService 클래스는 DemoApplication 클래스 패지지 외부에 있기 때문에 `@ComponentScan` 으로 스캔되지 않는다.
+
+
+  * Filter
+
+    * `@ComponentScan` 어노테이션 내에 필터는 어떤 어노테이션을 스캔 할지 또는 하지 않을지 필터링 해주는 역할을 한다.
+
+    * `@ComponentScan` 어노테이션을 사용한다고 해서 모든 어노테이션들을 처리해서 빈으로 등록해주는 것은 아니다. 걸러주는 필터들이 여럿 존재한다.
+
+
+  * `@ComponentScan` 사용시 스캔이 되는 대상들
+
+    * `@Component`
+
+    * `@Repository`
+
+    * `@Service`
+
+    * `@Controller`
+
+    * `@Configuration`
+
+
+  * 동작 원리
+
+    * `@ComponentScan`은 스캔할 패키지와 어노테이션에 대한 정보.
+
+    * 실제 스캐닝은 `ConfigurationClassPostProcessor`라는 `BeanFactoryPostProcessor`에 의해 처리 됨.
+
+    * `BeanFactoryPostProcessor` 인터페이스는 `BeanPostProcessor` 인터페이스와 비슷하나, 실행되는 시점이 다르다.
+
+      * `BeanFactoryPostProcessor` 인터페이스는 다른 모든 빈들을 만들기 이전에 적용을 한다. `BeanFactoryPostProcessor`의 구현체들을 다 적용한다.
+
+      * 다른 빈들(우리가 직접 등록하고자 하는 빈들을 의미한다. ex) BoardService, BoardController.. )을 모두 등록하기 전에, 컴포넌트 스캔을 해서 빈으로 등록을 해준다.
+
+
+  * Function을 사용한 Bean 등록.
+
+    * 리플렉션과 프록시 기법을 사용하지 않는 방법으로, 스프링 5부터 도입.
+
+      * 리플렉션과 프록시 기법들의 경우, 성능에 영향을 준다.
+
+    * 펑션 기법을 통해 Bean을 등록할 경우, 성능(애플리케이션 구동시간) 상의 이점이 있다.
+
+    * 펑션 기법의 경우, 조건에 따라 빈을 등록 하는 등 프로그래밍적인 컨트롤이 가능하다는 이점이 있다.
+
+    * 하지만, 조금 성능이 올라감으로써 이 방법이 `@ComponentScan`을 대체하기에는 무리가 있다.
+
+      * 모든 빈들을 매번 이와 같이 등록할 경우, 꽤 번거로운 작업이 될것이기 떄문이다.    
+
+    * Code Example
+
+      ```java
+      public static void main(String[] args) {
+        new SpringApplicationBuilder()
+            .sources(DemoSpringApplication.class)
+            .initializers((ApplicationContextInitializer<GenericApplicationContext>)
+            applicationContext -> {
+              applicationContext.registerBean(MyBean.class);
+            })
+            .run(args);
+      }
+      ```
