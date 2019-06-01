@@ -470,3 +470,307 @@
             .run(args);
       }
       ```
+### Bean의 스코프
+
+  * 스코프
+
+    * 싱글톤
+
+      * 애플리케이션 전반에 걸쳐서 해당 빈의 인스턴스가 오직 한 개만 생성되는 것.
+
+    * 프로토타입
+
+      * Request
+
+      * Session
+
+      * WebSocket
+
+      * ...
+
+  * 프로토타입 빈이 싱글톤 빈을 참조하면?
+
+    * 아무 문제 없다.
+
+    * 싱글톤 빈의 경우, 하나의 인스턴스만 생성되기 때문에 상관이 없다.
+
+      ```java
+      @Component
+      @Scope(value = "prototype")
+      public class Proto {
+
+        @Autowired
+        Single single
+
+        public Single getSingle() {
+          return single;
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class Single {
+      }
+      ```
+
+  * 싱글톤 빈이 프로토타입 빈을 참조하면
+
+    * 프로토타입 빈이 업데이트가 안된다.
+
+      * 싱글톤 빈이 프로토타입 빈을 참조하면, 싱글톤 빈은 하나의 인스턴스만 생성 되기 때문에 프로토타입 빈을 꺼내올 때마다, 업데이트 되지 않는다.
+
+        ```java
+        @Component
+        @Scope(value = "prototype")
+        public class Proto {
+        }
+        ```
+
+        ```java
+        @Component
+        public class Single {
+          @Autowired
+          Proto proto;
+
+          public Proto getProto() {
+            return proto;
+          }
+        }
+        }
+        ```
+
+        ```java
+        @Component
+        public class AppRunner implements ApplicationRunner {
+
+          @Autowired
+          ApplicationContext ctx;
+
+          @Override
+          public void run(ApplicationArguments args) throws Exception {
+
+            System.out.println("Proto");
+
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+
+            System.out.println("Single");
+
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+
+            System.out.println("Proto by single");
+
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+
+          }
+        }
+        ```
+
+        ```java
+        /* 출력 결과 */
+
+        Proto
+        com.donghun.pt4.Proto@6548bb7d
+        com.donghun.pt4.Proto@e27ba81
+        com.donghun.pt4.Proto@54336c81
+
+        Single
+        com.donghun.pt4.Single@1556f2dd
+        com.donghun.pt4.Single@1556f2dd
+        com.donghun.pt4.Single@1556f2dd
+
+        Proto by single
+        com.donghun.pt4.Proto@7561db12
+        com.donghun.pt4.Proto@7561db12
+        com.donghun.pt4.Proto@7561db12
+        ```
+
+    * 업데이트를 하기 위해선?
+
+      * scoped-proxy
+
+        * 프로토타입 빈을 싱글톤 빈이 직접적으로 참조를 하면 업데이트가 되지 않기 떄문에, 프록시 인스턴스로 프로로토타입 빈을 한번 감싸는 형태로 만드는 것으로 해결할 수 있다. 
+
+        * 프록시 인스턴스로 감싼 프로토타입 빈을 싱글톤 빈이 참조하게 되면, 싱글톤 빈이 참조될 때마다, 그 안에 참조되는 프로토타입 빈도 새로운 인스턴스로 생성되어 업데이트 될 수 있다.
+
+        ```java
+        @Component
+        @Scope(value = "prototype", proxyMode = ScopedProxyMode.TARGET_CLASS)
+        public class Proto {
+        }
+        ```
+
+        ```java
+        @Component
+        public class AppRunner implements ApplicationRunner {
+
+          @Autowired
+          ApplicationContext ctx;
+
+          @Override
+          public void run(ApplicationArguments args) throws Exception {
+
+            System.out.println("Proto");
+
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+            System.out.println(ctx.getBean(Proto.class));
+
+            System.out.println("Single");
+
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+            System.out.println(ctx.getBean(Single.class));
+
+            System.out.println("Proto by single");
+
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+            System.out.println(ctx.getBean(Single.class).getProto());
+
+          }
+        }
+        ```
+
+        ```java
+        /* 출력 결과 */
+
+        Proto
+        com.donghun.pt4.Proto@6548bb7d
+        com.donghun.pt4.Proto@e27ba81
+        com.donghun.pt4.Proto@54336c81
+
+        Single
+        com.donghun.pt4.Single@1556f2dd
+        com.donghun.pt4.Single@1556f2dd
+        com.donghun.pt4.Single@1556f2dd
+
+        Proto by single // 매번 다른 인스턴스로 생성되는 것을 볼 수 있다.
+        com.donghun.pt4.Proto@44ea608c
+        com.donghun.pt4.Proto@50cf5a23
+        com.donghun.pt4.Proto@450794b4
+        ```
+
+      * Object-Provider
+
+        ```java
+        @Component
+        @Scope(value = "prototype")
+        public class Proto {
+        }
+        ```
+
+        ```java
+        @Component
+        public class Single {
+          @Autowired
+          private ObjectProvider<Proto> proto;
+
+          public Proto getProto() {
+            return proto.getIfAvailable();
+          }
+        }
+        }
+        ```
+
+  * [프록시](https://en.wikipedia.org/wiki/Proxy_pattern)
+
+  * 싱글톤 객체 사용시 주의할 점
+
+    * 프로퍼티가 공유.
+
+      ```java
+        @Component
+        public class Single {
+          @Autowired
+          Proto proto;
+
+          int value = 0;
+
+          public Proto getProto() {
+            return proto;
+          }
+        }
+        }
+        ```
+
+        * Single Bean의 value 값이 안정적이라고 보장할수가 없다.
+
+    * ApplicationContext 초기 구동시 인스턴스 생성.
+
+### 스프링 부트의 테스트 어노테이션 정리.
+
+  * `@SpringBootTest`
+
+    * 통합 테스트를 제공하는 기본적인 스프링 부트 테스트 어노테이션
+
+    * 애플리케이션이 실행될 때의 설정을 임의로 바꾸어 테스트를 진행할 수 있음.
+
+    * 여러 단위 테스트를 하나의 통합된 테스트로 수행할 때 적합한 테스트 어노테이션.
+
+    * 스프링 부트 1.4 버전부터 제공, 스프링 부트 프로젝트를 만들면 메인 클래스와 함께 기본으로 제공.
+
+    * 스프링 부트 테스트 어노테이션들 중에서 `@SpringBootTest` 어노테이션은 만능임.
+
+      * 장점
+
+        * 실제 구동되는 애플리케이션과 똑같이 애플리케이션 컨텍스트를 로드하여 테스트 하기 때문에 하고 싶은 테스트를 모두 수행할 수 있음.
+
+      * 단점
+
+        * 애플리케이션에 설정된 빈을 모두 로드하기 때문에 애플리케이션 규모가 클수록 느려지기 때문에, 단위 테스트라는 의미가 희석됨.
+
+    * 사용할 때는 항상 `@RunWith(SpringRunner.class)`와 같이 사용해야 함.
+
+      * `@RunWith` 어노테이션을 사용하면 JUnit에 내장된 러너를 사용하는 대신 어노테이션에 정의된 러너 클래스 사용.
+
+      * `@SpringBootTest` 어노테이션을 사용하기 위해서는 JUnit 실행에 필요한 SpringJUnit4ClassRunner 클래스를 상속받은 `@RunWith(SpringRunner.class)`를 꼭 붙여 줘야함. 그러지 않을 경우, 정상적으로 동작하지 않는다.
+
+  * `@WebMvcTest`
+
+    * WEB에서 MVC를 위한 테스트이며, 웹에서 테스트 하기 힘든 컨트롤러를 테스트 하는데 적합함.
+
+    * 웹에서 요청(Request)과 응답(Response)에 대해 테스트가 가능하며, 시큐리티 혹은 필터까지 자동으로 테스트하며 수동으로 추가/삭제까지 가능.
+
+    * `@WebMvcTest`를 사용하면 MVC 관련 설정인 `@Controller`, `@ControllerAdvice`, `@JsonComponent`와  `Filter`, `WebMvcConfigurer`, `HandlerMethodArgumentResoler`만 로드하기 때문에, `@SpringBootTest` 어노테이션보다 가볍게 테스트가 가능.
+
+  * `@DataJpaTest`
+
+    * `@DataJpaTest` 어노테이션은 JPA 관련 테스트 설정만 로드.
+
+    * DataSource의 설정이 정상적인지, JPA를 사용하여 데이터를 제대로 생성, 수정, 삭제 하는지 등의 테스트가 가능.
+
+    * 내장형 데이터베이스를 사용하여 실제 데이터베이스를 사용하지 않고 테스트 데이터베이스로 테스트 할 수 있다.
+
+  * `@DataJpaTest`
+
+    * `@DataJpaTest` 어노테이션은 JPA 관련 테스트 설정만 로드한다.
+
+    * DataSource의 설정이 정상적인지, JPA를 사용하여 데이터를 제대로 생성, 수정, 삭제하는지 등의 테스트가 가능하다.
+
+    * 내장형 데이터베이스를 사용하여 실제 데이터베이스를 사용하지 않고 테스트 데이터베이스로 테스트를 할 수 있다.
+
+      * 즉, 테스트의 내용이 실제 DB에 반영되지 않는다.
+
+      * JPA 테스트가 끝날 때마다 자동으로 테스트에 사용한 데이터를 롤백한다.
+
+    * 기본적으로 인메모리 임베디드 데이터베이스를 사용하며, `@Entity` 어노테이션을 스캔하여 스프링 데이터 JPA 저장소를 구성한다. 
+
+  * `@RestClientTest`
+
+    * REST 관련 테스트를 도와주는 어노테이션.
+
+    * REST 통신의 데이터 형으로 사용되는 JSON 형식이 예상대로 응답을 반환하는지 등을 테스트 할 수 있다.
+
+  * `@JsonTest`
+
+    * `@JsonTest` 어노테이션은 JSON의 직렬화와 역질렬화를 수행하는 라이브러리인 Gson과 Jackson API의 테스트를 제공한다.
+
+    * 각각 GsonTest와 JacksonTest를 사용하여 테스트를 수행한다.
+    
