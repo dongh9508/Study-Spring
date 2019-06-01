@@ -514,7 +514,7 @@
       }
       ```
 
-  * 싱글톤 빈이 프로토타입 빈을 참조하면
+  * 싱글톤 빈이 프로토타입 빈을 참조하면?
 
     * 프로토타입 빈이 업데이트가 안된다.
 
@@ -856,7 +856,6 @@
     * `@ActiveProfiles` (테스트용)
 
 
-
   * Profile 표현식
 
     * !(not)
@@ -948,3 +947,297 @@
       ```
 
     * Profile까지 고려한 계층형 프로퍼티 우선 순위 제공.
+
+### MessageSource
+
+  * ApplicationContext extends MessageSource
+
+    * getMessage(String code, Object[] args, String, default, Locale, Ioc)
+
+  * 스프링 부트를 사용한다면 별다른 설정 필요없이 meesages.properties 사용할 수 있음.
+
+    * messages.properties
+
+    * messages_ko_kr.properties
+
+  * Reloading 기능이 있는 메세지 소스 사용하기.
+
+    ```java
+    @Bean
+    public MessageSource messageSource() {
+      var messageSource = new ReloadableResourceBundleMessageSource();
+      messageSource.setBasename("classpath:/messages");
+      messageSource.setDefaultEncoding("UTF-8");
+      messageSource.setCacheSeconds(3);
+      return messageSource;
+    }
+    ```
+
+### ApplicationEventPublisher
+
+  * 이벤트 프로그래밍에 필요한 인터페이스 제공, [Observer pattern](https://en.wikipedia.org/wiki/Observer_pattern) 구현체.
+
+  * ApplicationContext extends ApplicationEventPublisher
+
+    * publishEvent(ApplicationEvent event)
+
+  * 이벤트 만들기
+
+    * ApplicationEvent 생성
+
+    * 스프링 4.2 부터는 이 클래스를 상속받지 않아도 이벤트로 사용할 수 있다.
+
+  * 이벤트를 발생 시키는 방법
+
+    * ApplicationEventPublisher.publishEvent();
+
+  * 이벤트 처리하는 방법
+
+    * ApplicationListener<이벤트> 구현한 클래스 만들어서 Bean으로 등록하기.
+
+      ```java
+      public class MyEvent extends ApplicationEvent {
+
+        private int data;
+
+        /**
+         * Create a new ApplicationEvent.
+         *
+         * @param source the object on which the event initially occurred (never {@code null})
+        */
+        public MyEvent(Object source) {
+          super(source);
+        }
+
+        public MyEvent(Object source, int data) {
+          super(source);
+          this.data = data;
+        }
+
+        public int getData() {
+          return data;
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class MyEventHandler implements ApplicationListener<MyEvent> {
+
+        @Override
+        public void onApplicationEvent(MyEvent event) {
+          System.out.println("이벤트 받았다. 데이터는 " + event.getData());
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class AppRunner implements ApplicationRunner {
+
+        @Autowired
+        ApplicationEventPublisher applicationEventPublisher;
+
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+          applicationEventPublisher.publishEvent(new MyEvent(this, 100));
+        }
+      }
+      ```
+
+      ```java
+      // 실행 결과
+      이벤트 받았다. 데이터는 100
+      ```
+
+    * 스프링 4.2부터는 @EventListener를 사용해서 Bean의 메소드에 사용할 수 있다.
+
+      ```java
+      public class MyEvent {
+
+        private int data;
+
+        private Object source;
+
+        public MyEvent(Object source, int data) {
+          this.source = source;
+          this.data = data;
+        }
+
+        public Object getSource() {
+          return source;
+        }
+
+        public int getData() {
+          return data;
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class MyEventHandler {
+
+        @EventListener
+        public void onApplicationEvent(MyEvent event) {
+          System.out.println("이벤트 받았다. 데이터는 " + event.getData());
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class AppRunner implements ApplicationRunner {
+
+        @Autowired
+        ApplicationEventPublisher applicationEventPublisher;
+
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+          applicationEventPublisher.publishEvent(new MyEvent(this, 100));
+        }
+      }
+      ```
+
+      ```java
+      // 실행 결과
+      이벤트 받았다. 데이터는 100
+      ```
+
+    * 핸들러가 여러개 있을 경우, 그 실행 순서는 기본적으로 synchronized.
+
+      ```java
+      @Component
+      public class AnoterHandler {
+
+        @EventListener
+        public void handle(MyEvent myEvent) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("Another " + myEvent.getData());
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class MyEventHandler  {
+
+        @EventListener
+        public void onApplicationEvent(MyEvent event) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("이벤트 받았다. 데이터는 " + event.getData());
+        }
+      }
+      ```
+
+      ```java
+      // 실행 결과
+      Thread[main,5,main]
+      이벤트 받았다. 데이터는 100
+      Thread[main,5,main]
+      Another 100
+
+      // 또는
+      Thread[main,5,main]
+      Another 100
+      Thread[main,5,main]
+      이벤트 받았다. 데이터는 100
+      ```
+
+    * 핸들러가 여러개 있고, 핸들러간의 실행 순서를 정하고 싶다면 `@Order`와 함께 사용.
+
+       ```java
+      @Component
+      public class MyEventHandler  {
+
+        @EventListener
+        @Order(Ordered.HIGHEST_PRECEDENCE)
+        public void onApplicationEvent(MyEvent event) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("이벤트 받았다. 데이터는 " + event.getData());
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class AnoterHandler {
+
+        @EventListener
+        @Order(Ordered.HIGHEST_PRECEDENCE + 2)
+        public void handle(MyEvent myEvent) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("Another " + myEvent.getData());
+        }
+      }
+      ```
+
+      ```java
+      // 실행 결과
+
+      Thread[main,5,main]
+      이벤트 받았다. 데이터는 100
+      Thread[main,5,main]
+      Another 100
+      ```
+
+    * 비동기적으로 실행하고 싶다면 `@Async`와 함께 사용.
+
+       ```java
+      @Component
+      public class MyEventHandler  {
+
+        @EventListener
+        @Async
+        public void onApplicationEvent(MyEvent event) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("이벤트 받았다. 데이터는 " + event.getData());
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class AnoterHandler {
+
+        @EventListener
+        @Async
+        public void handle(MyEvent myEvent) {
+          System.out.println(Thread.currentThread().toString());
+          System.out.println("Another " + myEvent.getData());
+        }
+      }
+      ```
+
+      ```java
+      @SpringBootApplication
+      @EnableAsync
+      public class Demo32Application {
+
+        public static void main(String[] args) {
+          SpringApplication.run(Demo32Application.class);
+        }
+      }
+      ```
+
+      ```java
+      // 실행 결과
+
+      Thread[task-1,5,main]
+      Another 100
+      Thread[task-2,5,main]
+      이벤트 받았다. 데이터는 100
+      ```
+
+  * 스프링이 제공하는 기본 이벤트
+
+    * ContextRefreshedEvent : ApplicationContext를 초기화 했거나 Refresh 했을 때 발생.
+
+    * ContextStartedEvent : ApplicationContext를 start()하여 라이프 사이클 Bean들이 시작 신호를 받은 시점에 발생.
+
+    * ContextStoppedEvent : ApplicationContext를 stop()하여 라이프 사이클 Bean들이 정지 신호를 받은 시점에 발생.
+
+    * ContextClosedEvent : ApplicationContext를 close()하여 싱글톤 빈이 소멸되는 시점에 발생.
+
+    * RequestHandledEvnet : HTTP 요청을 처리했을 때 발생.
+
