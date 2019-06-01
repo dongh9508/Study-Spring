@@ -364,7 +364,6 @@
     
     * 가장 추천 방법은 `@Primary` 어노테이션을 사용하는 방법.
 
-
 ### `@Component` 와 `@ComponentScan`
 
   * 컴포넌트 스캔의 주요 기능
@@ -470,6 +469,7 @@
             .run(args);
       }
       ```
+
 ### Bean의 스코프
 
   * 스코프
@@ -774,3 +774,177 @@
 
     * 각각 GsonTest와 JacksonTest를 사용하여 테스트를 수행한다.
     
+### Environment #1, Profile.
+
+  * Profile일과 Property를 다루는 인터페이스.
+
+  * ApplicationContext extends EnvironmentCapable
+
+    * `getEnvironment()`
+
+  * Profile
+
+    * 빈들의 그룹
+
+    * Environment의 역할은 활성화 할 프로파일 확인 및 설정.
+
+  * Profile 을 사용하기 좋은 상황들.
+
+    * 테스트 환경에서는 A라는 빈을 사용하고, 배포 환경에서는 B라는 빈을 쓰고 싶다.
+
+    * 이 빈은 모니터링 용도니까, 테스트 할 때는 필요가 없고 배포할 때만 등록이 되면 좋겠다.
+
+  * Profile 정의하기
+
+    * 클래스에 정의
+
+      * `@Configuration @Profile('test')`
+
+        ```java
+        @Configuration
+        @Profile("test")
+        public class TestConfiguration {
+
+          @Bean
+          public StudentRepository studentRepository() {
+            return new TestStudentRepository();
+          }
+        }
+        ```
+
+      * `@Component @Profile('test')`
+
+        ```java
+        @Repository
+        @Profile("test")
+        public class TestStudentRepository implements StudentRepository {
+        }
+        ```
+
+    * 메소드에 정의
+
+      * `@Bean @Profile('test')`
+
+        ```java
+        @Configuration
+        @Profile("test")
+        public class TestConfiguration {
+
+          @Bean
+          public StudentRepository studentRepository() {
+            return new TestStudentRepository();
+          }
+        }
+        ```
+
+  * Profile 설정하기
+
+    * `-Dspring.profiles.avtive = 'test, A, B, ...'`
+
+      * Edit Configurations.. 에 들어가기.
+
+        ![1](./image/active1.png)
+
+      * Active Profiles 에 지정한 프로파일의 이름을 넣어주기.
+
+        ![2](./image/acrive.png)
+
+      * Active Profiles 가 없을 경우, Enviroment 라는 탭을 열어서 vm option에 `-Dspring.profiles.avtive = "test"` 라고 넣어주면 된다.
+
+        ![3](./image/active3.png)
+
+    * `@ActiveProfiles` (테스트용)
+
+
+
+  * Profile 표현식
+
+    * !(not)
+
+    * &(and)
+
+    * |(or)
+
+      ```java
+        @Repository
+        @Profile("!prod & test")
+        public class TestStudentRepository implements StudentRepository {
+        }
+      ```
+
+### Environment #2, Property.
+
+  * Property
+
+    * 다양한 방법으로 정의할 수 있는 설정 값.
+
+    * [Environment](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/env/Environment.html)의 역할은 Property 소스 설정 및 프로퍼티 값 가져오기.
+
+  * Property에는 우선순위가 존재.
+
+    * StandardServletEnvironment의 우선순위
+
+      * ServletConfig 매개변수
+
+      * ServeltContext 매개변수
+
+      * JNDI(java.comp/env/)
+
+      * JVM 시스템 프로퍼티(-Dkey="value")
+
+      * JVM 시스템 환경 변수 (운영체제 환경 변수)
+
+  * `@PropertySource`
+
+    * Environment를 통해 프로퍼티 추가하는 방법
+
+  * 스프링 부트의 외부 설정 참고
+
+    * 기본 프로퍼티 소스 지원(application.properties).
+
+      ```java
+      // app.properties 파일
+
+      app.about = spring
+      ```
+
+      ```java
+      @SpringBootApplication
+      @PropertySource("classpath:/app.properties")
+      public class Deno123Application {
+
+        public static void main(String[] args) {
+          SpringApplication.run(Deno123Application.class);
+        }
+      }
+      ```
+
+      ```java
+      @Component
+      public class AppRunner2 implements ApplicationRunner {
+
+        @Autowired
+        ApplicationContext applicationContext;
+
+        @Autowired
+        BasicRepostiory basicRepostiory;
+
+        @Value("${app.about}")
+        String appAbout;
+
+        @Override
+        public void run(ApplicationArguments args) throws Exception {
+          Environment environment = applicationContext.getEnvironment();
+          System.out.println(environment.getProperty("app.about"));
+          System.out.println(appAbout);
+        }
+      }
+      ```
+
+      ```java
+      // 출력 결과
+      spring
+      spring
+      ```
+
+    * Profile까지 고려한 계층형 프로퍼티 우선 순위 제공.
