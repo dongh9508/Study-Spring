@@ -1556,7 +1556,7 @@
 
 #### AOP의 개념
 
-  * **AOP(Aspect-oriendted Programming)**는 OOP를 보완하는 수단으로, 흩어진 Aspect를 모듈화 할 수 있는 프로그래밍 기법.
+  * <strong>AOP(Aspect-oriendted Programming)</strong>는 OOP를 보완하는 수단으로, 흩어진 Aspect를 모듈화 할 수 있는 프로그래밍 기법.
 
   * 흩어진 관심사(Crosscutting Concerns)
 
@@ -1564,9 +1564,9 @@
 
   *  AOP를 적용하면?
 
-    * Class A = [], Class B = [], Class C = []
+      * Class A = [], Class B = [], Class C = []
 
-    * Aspect X(노랑) = [A, B, C], Aspect Y(파랑) = [A, B], Aspect Z(빨강) = [A, C]
+      * Aspect X(노랑) = [A, B, C], Aspect Y(파랑) = [A, B], Aspect Z(빨강) = [A, C]
 
   * AOP 주요 개념
 
