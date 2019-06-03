@@ -13,6 +13,7 @@
   * 빈 설정 소스로부터 빈 정의를 읽어들이고, 빈을 구성하고 제공한다.
 
 ### Bean
+<details><summary>세부정보</summary>
 
   * Spring IoC Container가 관리하는 객체.
 
@@ -53,6 +54,8 @@
       * `@Autowired` 어노테이션을 이용하여 의존성 주입을 할 수 있다.
 
       * 생성자, 세터, 필드를 이용해서 의존성 주입이 가능하다.
+
+</details>
 
 ### ApplicationContext
 
@@ -144,6 +147,7 @@
   * 특정 패키지 이하의 모든 클래스 중에 `@Component` 어노테이션을 사용한 클래스를 Bean으로 자동으로 등록 해줌.
 
 ### `@Autowire`
+<details><summary>세부정보</summary>
 
   * 필요한 의존 객체의 "타입"에 해당하는 빈을 찾아 주입한다.
 
@@ -364,7 +368,10 @@
     
     * 가장 추천 방법은 `@Primary` 어노테이션을 사용하는 방법.
 
+</details>
+
 ### `@Component` 와 `@ComponentScan`
+<details><summary>세부정보</summary>
 
   * 컴포넌트 스캔의 주요 기능
 
@@ -407,7 +414,6 @@
       * 위 코드의 경우,  MyService는 빈으로 등록되지 않아서 빈이 주입이 되지 않는 에러가 발생한다. 
       
       * MyService 클래스는 DemoApplication 클래스 패지지 외부에 있기 때문에 `@ComponentScan` 으로 스캔되지 않는다.
-
 
   * Filter
 
@@ -470,7 +476,10 @@
       }
       ```
 
+</details>
+
 ### Bean의 스코프
+<details><summary>세부정보</summary>
 
   * 스코프
 
@@ -704,7 +713,10 @@
 
     * ApplicationContext 초기 구동시 인스턴스 생성.
 
+</details>
+
 ### 스프링 부트의 테스트 어노테이션 정리.
+<details><summary>세부정보</summary>
 
   * `@SpringBootTest`
 
@@ -773,8 +785,11 @@
     * `@JsonTest` 어노테이션은 JSON의 직렬화와 역질렬화를 수행하는 라이브러리인 Gson과 Jackson API의 테스트를 제공한다.
 
     * 각각 GsonTest와 JacksonTest를 사용하여 테스트를 수행한다.
-    
+
+</details>
+
 ### Environment #1, Profile.
+<details><summary>세부정보</summary>
 
   * Profile일과 Property를 다루는 인터페이스.
 
@@ -871,7 +886,10 @@
         }
       ```
 
+</details>
+
 ### Environment #2, Property.
+<details><summary>세부정보</summary>
 
   * Property
 
@@ -948,7 +966,10 @@
 
     * Profile까지 고려한 계층형 프로퍼티 우선 순위 제공.
 
+</details>
+
 ### MessageSource
+<details><summary>세부정보</summary>
 
   * ApplicationContext extends MessageSource
 
@@ -972,8 +993,10 @@
       return messageSource;
     }
     ```
+</details>
 
 ### ApplicationEventPublisher
+<details><summary>세부정보</summary>
 
   * 이벤트 프로그래밍에 필요한 인터페이스 제공, [Observer pattern](https://en.wikipedia.org/wiki/Observer_pattern) 구현체.
 
@@ -1241,3 +1264,444 @@
 
     * RequestHandledEvnet : HTTP 요청을 처리했을 때 발생.
 
+</details>
+
+### ResourceLoader
+<details><summary>세부정보</summary>
+
+  * Resource를 읽어오는 기능울 제공하는 인터페이스.
+
+  * ApplicationContext extends ResourceLoader
+
+  * Resource 읽어오기.
+
+    * 파일 시스템에서 읽어오기.
+
+    * 클래스 패스에서 읽어오기.
+
+    * URL로 읽어오기.
+
+    * 상대/절대 경로로 읽어오기.
+
+  * Resource getResource(java.lang.String location)
+</details>
+
+### Resource 추상화
+<details><summary>세부정보</summary>
+
+  * org.springframework.core.io.Resource
+
+  * 특징
+
+    * java.net.URL을 추상화 한 것.
+
+    * 스프링 내부에서 많이 사용하는 인터페이스.
+
+  * 추상화 한 이유
+
+    * 클래스 패스 기준으로 리소스 읽어오는 기능 부재.
+
+    * ServletContext를 기준으로 상대 경로로 읽어오는 기능 부재.
+
+    * 새로운 핸들러를 등록하여 특별한 URL 접미사를 만들어 사용할 수는 있지만 구현이 복잡하고 편의성 메소드가 부족하다.
+
+  * [인터페이스 둘러보기](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/io/Resource.html)
+
+    * 상속 받은 인터페이스
+
+    * 주요 메소드
+
+      * `getinputStream()`
+
+      * `exitst()`
+
+      * `isOpen()`
+
+      * `getDescription()` : 전체 경로 포함한 파일 이름 또는 실제 URL.
+
+  * 구현체
+
+    * UrlResource : [java.net.URL](https://docs.oracle.com/javase/7/docs/api/java/net/URL.html) 참고, 기본으로 지원하는 프로토콜 http, ftp, file, jar.
+
+    * ClassPathResource : 지원하는 접두어 classpath:
+
+    * FileSystemResource
+
+    * ServletContextResource : 웹 어플리케이션 루트에서 상대 경로로 리소스를 찾는다.
+
+  * Resource 읽어오기
+
+    * Resource의 타입은 location 문자열과 ApplicationContext의 타입에 따라 결정 된다.
+
+      * ClassPathXmlApplicationContext -> ClassPathResource
+
+      * FileSystemXmlApplicationContext -> FileSystemResource
+
+      * WebApplicationContext -> ServletContextResource
+
+    * ApplicationContext의 타입에 상관없이 리소스 타입을 강제하려면 java.net.URL 접두어(+ classpath:) 중 하나를 사용할 수 있다.
+
+      * classpath:me/whiteship/config.xml -> ClassPathResource
+
+      * file://some/resource/path/config.xml -> FileSystemResource
+
+</details>
+
+### Validation 추상화
+<details><summary>세부정보</summary>
+
+  * org.springframework.validation.Vaildator
+
+  * 어플리케이션에서 사용하는 객체 검증용 인터페이스.
+
+  * 특징
+
+    * 어떠한 계층과도 관계가 없다.
+      
+      * 모든 계층(웹, 서비스, 데이터)에서 사용해도 좋다.
+
+    * 구현체 중 하나로, JSR-303(Bean Validation 1.0)과 JSR-349(Bean Validation 1.1)을 지원한다. (LocalValidatorFactoryBean)
+
+    * DataBinder에 들어가 바인딩 할 때 같이 사용되기도 한다.
+
+  * 인터페이스
+
+    * boolean supports(Class clazz) : 어떤 타입의 객체를 검증할 때 사용할 것인지 결정함.
+
+    * void validate(Object obj, Errors e) : 실제 검증 로직을 이 안에서 구현.
+
+      * 구현할 때 ValidationUtils를 사용하며 편리함.
+
+  * Spring Boot 2.0.5 이상 버전을 사용할 때
+
+    * LocalValidatorFactoryBean 빈으로 자동 등록.
+
+    * JSR-380(Bean Validation 2.0.1) 구현체로 hibernate-vaildator 사용.
+
+    * https://beanvalidation.org/
+
+</details>
+
+### PropertyEditor
+<details><summary>세부정보</summary>
+
+  * org.springframework.validation.DataBinder
+
+  * 기술적인 관점
+
+    * 프로퍼티 값을 타켓 객체에 설정하는 기능.
+
+  * 사용자 관점
+
+    * 사용자 입력 값을 애플리케이션 도메인 모델에 동적으로 변환해 넣어주는 기능.
+
+    * 입력 값 대부분 '문자열'인데, 그 값을 객체가 가지고 있는 int, long, Boolean, Data 등 심지어 Event, Book 같은 도메인 타입으로도 변환해서 넣어주는 기능.
+
+  * 스프링 3.0 이전까지 DataBinder가 변환 작업에 사용하던 인터페이스.
+
+  * 쓰레드-세이프 하지 않음.
+
+    * 상태 정보 저장하고 있음, 따라서 싱글톤 빈으로 등록해서 써선 안된다.
+
+  * Object와 String 간의 변환만 할 수 있어, 사용 범위가 제한적임.
+
+    * 그래도 그런 경우가 대부분이기 때문에 조심해서 잘 사용해 왔음.
+
+  ```java
+  public class EventPropertyEditor extends PropertyEditorSupport {
+    @Override
+    public String getAsText() {
+      return ((Event)getValue()).getTitle();
+    }
+    @Override
+    public void setAsText(String text) throws IllegalArgumentException {
+      int id = Integer.parseInt(text);
+      Event event = new Event();
+      event.setId(id);
+      setValue(event);
+    }
+  }
+  ```
+</details>
+
+### Converter와 Formatter
+<details><summary>세부정보</summary>
+
+  * Converter
+
+    * S 타입을 T 타입으로 변환할 수 있는 매우 일반적인 변환기.
+
+    * 상태 정보 없음 == Stateless == 쓰레드 세이프
+
+    * ConverterRegistry에 등록해서 사용.
+
+    ```java
+    public class StringToEventConverter implements Converter<String, Event> {
+      @Override
+      public Event convert(String source) {
+        Event event = new Event();
+        event.setId(Integer.parseInt(source));
+        return evnet;
+      }
+    }
+    ```
+  
+  * Fomatter
+
+    * PropertyEditor 대체제
+
+    * Object와 String 간의 변환을 담당한다.
+
+    * 문자열을 Locale에 따라 다국화하는 기능도 제공한다. (optional)
+
+    * FormatterRegistry에 등록해서 사용.
+
+    ```java
+    public class EventFormatter implements Formatter<Event> {
+
+      @Override
+      public Event parse(String text, Locale locale) throws ParseException {
+        Event event = new Event();
+        int id = Integer.parseInt(text);
+        event.setId(id);
+        return event;
+      }
+
+      @Override
+      public String print(Event object, Locale locale) {
+        return object.getId().toString();
+      }
+    }
+    ```
+
+  * [ConversionService](https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/core/convert/ConversionService.html)
+
+    * 실제 변환 작업은 이 인터페이스를 통해서 쓰레드-세이프하게 사용할 수 있음.
+
+    * 스프링 MVC, 빈(Value) 설정, SpEL에서 사용한다.
+
+    * DefaultFormattingConversionService
+
+      * FomatterRegistry
+
+      * ConversionService
+
+      * 여러 기본 컴버터와 포매터 등록 해줌.
+
+  * 스프링 부트
+
+    * 웹 어플리케이션의 경우에 DefaultFormattingconversionService를 상속하여 만든 WebConversionService를 빈으로 등록해준다.
+
+    * Formatter와 Converter 빈을 찾아 자동으로 등록해 준다.
+
+</details>
+
+### SpEL(Spring Expression Language)
+<details><summary>세부정보</summary>
+
+  * Spring EL 이란?
+
+    * 객체 그래프를 조회하고 조작하는 기능을 제공한다.
+
+    * [Unified EL](https://docs.oracle.com/javaee/5/tutorial/doc/bnahq.html)과 비슷하지만, 메소드 호출을 지원하며, 문자열 템플릿 기능도 제공한다.
+
+    * OGNL, MVEL, JBOss EL 등 자바에서 사용할 수 있는 여러 EL이 있지만, SqEL은 모든 스프링 프로젝트 전반에 걸쳐 사용할 EL로 만들었다.
+
+    * 스프링 3.0 부터 지원.
+
+  * SpEL 구성
+
+    * ExpressionParser parser = new SpelExpressionParser()
+
+    * StandardEvaluationContext context = new StandardEvaluationContext(bean)
+
+    * Expression expression = parser.parseExpression('SpEL 표현식')
+
+    * String value = expression.getvalue(context, String.class)
+
+  * 문법
+
+    * `#{"표현식"}`
+
+    * `${"프로퍼티"}`
+
+    * 표현식은 프로퍼티를 가질 수 있지만, 반대는 안된다.
+
+      * `#{${my.data} + 1}`
+
+    * [Reference](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#expressions-language-ref) 참고.
+
+  * 실제로 사용되는 케이스
+
+    * `@Value` 어노테이션
+
+    * `@ConditionalOnExpression` 어노테이션
+
+    * Spring Security
+
+      * 메소드 시큐리티, `@PreAuthorize`, `@PostAuthorize`, `@PreFilter`, `@PostFilter`
+
+      * XML 인터셉터 URL 설정
+
+    * Spring 데이터
+
+      * `@Query` 어노테이션
+
+    * [Thymeleaf](https://blog.outsider.ne.kr/997)
+
+</details>
+
+### AOP
+<details><summary>세부정보</summary>
+
+#### AOP의 개념
+
+  * **AOP(Aspect-oriendted Programming)**는 OOP를 보완하는 수단으로, 흩어진 Aspect를 모듈화 할 수 있는 프로그래밍 기법.
+
+  * 흩어진 관심사(Crosscutting Concerns)
+
+    * Class A = [파랑, 빨강, 노랑], Class B = [파랑, 파랑, 노랑], Class C = [빨강, 노랑]
+
+  *  AOP를 적용하면?
+
+    * Class A = [], Class B = [], Class C = []
+
+    * Aspect X(노랑) = [A, B, C], Aspect Y(파랑) = [A, B], Aspect Z(빨강) = [A, C]
+
+  * AOP 주요 개념
+
+    * Aspect와 Target
+
+      * Target은 Class A, B, C가 된다.
+
+    * Advice
+
+      * 해야할 일들, 위와 같은 경우 노랑, 파랑, 빨강이 된다.
+
+    * Join point와 Pointcut
+
+      * Join point는 합류점으로써, 많이 사용되는 Join Point가 메서드 실행 시점이나 생성자 호출 직전, 생성자 호출 직후, 필드 접근 전, 필드에서 값을 가져갔을 때 등등 다양한 합류점이 있다.
+
+      * Pointcut은 어디에 적용을 해야 하는지를 나타내는 공간, 위의 경우 class A, B, C를 담게 된다.
+
+  * AOP 구현체
+
+    * https://en.wikipedia.org/wiki/Aspect-oriented_programming
+
+    * Java
+
+      * AspectJ
+
+      * 스프링 AOP
+
+  * AOP 적용 방법
+
+    * 컴파일
+
+    * 로드 타임
+
+    * 런 타임
+
+#### 프록시 기반 AOP
+
+  * 스프링 AOP 특징
+
+    * 프록시 기반의 AOP 구현체
+
+    * 스프링 빈에만 AOP를 적용할 수 있다.
+
+    * 모든 AOP 기능을 제공하는 것이 목적이 아니라, 스프링 IoC와 연동하여 엔터프라이즈 어플리케이션에서 가장 흔한 문제에 대한 해결책을 제공하는 것이 목적.
+
+  * 프록시 패턴
+
+    * 왜? (기존 코드의 변경 없이) 접근 제어 또는 부가 기능 추가.
+
+    * 기존 코드를 건드리지 않고 성능을 측정해보자. (프록시 패턴으로)
+
+  * 문제점
+
+    * 매번 프록시 클래스를 작성해야 하는가?
+
+    * 여러 클래스 여러 메소드에서 적용하려면?
+
+    * 객체들 관계도 복잡하다..
+
+  * 그래서 등장한 것이 스프링 AOP
+
+    * Spring IoC Container가 제공하는 기반 시설과 Dynamic 프록시를 사용하여 여러 복잡한 문제 해결.
+
+    * 동적 프록시 : 동적으로 프록시 객체 생성하는 방법.
+
+      * 자바가 제공하는 방법은 인터페이스 기반 프록시 생성.
+
+      * CGlib은 클래스 기반 프록시도 지원.
+
+    * Spring IoC : 기존 빈을 대체하는 동적 프록시 빈을 만들어 등록 시켜준다.
+
+      * 클라이언트 코드 변경 없음.
+
+      * AbstractAutoProxyCreator implements BeanPOstProcessor
+
+#### `@AOP`
+
+  * 의존성 추가.
+
+    ```java
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+    ```
+
+  * Aspect 정의
+
+    * `@Aspect`
+
+    * 빈으로 등록해야 하니까 (컴포넌트 스캔을 사용한다면) `@Component` 추가.
+
+  * Pointcut 정의
+
+    * `@Pointcut`
+
+    * 주요 표현식
+
+      * execution
+
+      * `@annotation`
+
+      * bean
+
+    * Pointcut 조합
+
+      * &&, ||, !
+
+  * Advice 정의
+
+    * `@Before`
+
+    * `@AfterReturning`
+
+    * `@AfterThrowing`
+
+    * `@Around`
+
+</details>
+
+### Null-safety
+<details><summary>세부정보</summary>
+
+  * 스프링 프레임워크 5에 추가된 Null 관련 어노테이션
+
+    * `@NotNull`
+
+    * `@Nullable`
+
+    * `@NonNullApi`(패키지 레벨 설정)
+
+    * `@NonNullFields`(패키지 레벨 설정)
+
+  * 목적
+
+    * (Tool의 지원을 받아) 컴파일 시점에 최대한 NullPointerException을 방지하는 것.
+
+</details>

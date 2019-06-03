@@ -1,6 +1,9 @@
 package com.donghun.pt1;
 
-import com.donghun.pt3.BookRepository;
+import com.donghun.iocContainer_Bean.Phone;
+import com.donghun.iocContainer_Bean.PhoneRepository;
+import com.donghun.iocContainer_Bean.PhoneService;
+import com.donghun.iocContainer_Bean.PhoneStatus;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

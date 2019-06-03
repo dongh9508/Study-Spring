@@ -1,7 +1,6 @@
 package com.donghun.pt2;
 
 
-import com.donghun.pt1.PhoneRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
